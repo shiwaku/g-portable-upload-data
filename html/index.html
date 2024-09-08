@@ -71,8 +71,55 @@
       unit: 'metric'
     }));
 
+    // 3D地形コントロール表示
+    map.addControl(
+      new maplibregl.TerrainControl({
+        source: 'gsidem-terrain-rgb',
+        exaggeration: 1 // 標高を強調する倍率
+      })
+    );
+
     // マップをロード
     map.on('load', () => {
+      // 標高タイルソース
+      map.addSource("gsidem-terrain-rgb", {
+        type: 'raster-dem',
+        tiles: [
+          'http://192.168.249.1/public/gsi-dem-terrain-rgb/{z}/{x}/{y}.png',
+        ],
+        attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html#dem" target="_blank">地理院タイル(標高タイル)</a>',
+        tileSize: 256
+      });
+
+      /*
+      // 標高タイルセット
+      map.setTerrain({ 'source': 'gsidem-terrain-rgb', 'exaggeration': 1 });
+      */
+
+      // PLATEAU建築物モデル（PMTiles）ソース
+      map.addSource("plateau", {
+        type: "vector",
+        url: "pmtiles://./public/PLATEAU_2023_LOD0.pmtiles",
+        minzoom: 16,
+        maxzoom: 16,
+        attribution: "<a href='https://www.geospatial.jp/ckan/dataset/plateau' target='_blank'>3D都市モデル Project PLATEAU (国土交通省)</a>, <a href='https://beta.source.coop/repositories/pacificspatial/flateau/description/' target='_blank'>Flateau (based on PLATEAU, created by Pacific Spatial Solutions, Inc.)</a>"
+      });
+
+      // PLATEAU建築物モデル（PMTiles）レイヤ
+      map.addLayer({
+        'id': 'lod0-building',
+        'source': 'plateau',
+        'source-layer': "PLATEAU_2023_LOD0",
+        "minzoom": 16,
+        "maxzoom": 23,
+        'type': 'fill-extrusion',
+        'paint': {
+          "fill-extrusion-color": '#FFFFFF',
+          "fill-extrusion-opacity": 1,
+          "fill-extrusion-height": ["get", "measured_height"]
+        }
+      });
+
       // Skyレイヤ
       map.setSky({
         "sky-color": "#199EF3",
